@@ -89,9 +89,7 @@ public class Clock extends View {
     @Override
     protected void onDraw(final Canvas canvas) {
         super.onDraw(canvas);
-
         mWidth = getHeight() > getWidth() ? getWidth() : getHeight();
-
         int halfWidth = mWidth / 2;
         mCenterX = halfWidth;
         mCenterY = halfWidth;
@@ -100,13 +98,11 @@ public class Clock extends View {
         HOUR_POINTER_LENGTH = PANEL_RADIUS - 400;
         MINUTE_POINTER_LENGTH = PANEL_RADIUS - 250;
         SECOND_POINTER_LENGTH = PANEL_RADIUS - 150;
-
         drawDegrees(canvas);
         drawHoursValues(canvas);
         drawNeedles(canvas);
-
-        // todo 每一秒刷新一次，让指针动起来
-
+        // 每一秒刷新一次，让指针动起来
+        postInvalidateDelayed(1000);
     }
 
     private void drawDegrees(Canvas canvas) {
@@ -145,10 +141,20 @@ public class Clock extends View {
      * @param canvas
      */
     private void drawHoursValues(Canvas canvas) {
-        // Default Color:
-        // - hoursValuesColor
-
-
+        // 画表盘上的小时数字
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(mWidth * 0.08f);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        // 12小时制
+        int hourCount = 12;
+        float textRadius = PANEL_RADIUS - mWidth * 0.13f;
+        for (int i = 1; i <= hourCount; i++) {
+            double angle = Math.toRadians((i * 30) - 90); // 30度一格，12点在正上方
+            float x = (float) (mCenterX + textRadius * Math.cos(angle));
+            float y = (float) (mCenterY + textRadius * Math.sin(angle) + mWidth * 0.03f); // y轴微调
+            canvas.drawText(String.valueOf(i), x, y, textPaint);
+        }
     }
 
     /**
@@ -166,20 +172,15 @@ public class Clock extends View {
         // 画秒针
         drawPointer(canvas, 2, nowSeconds);
         // 画分针
-        // todo 画分针
+        drawPointer(canvas, 1, nowMinutes);
         // 画时针
         int part = nowMinutes / 12;
         drawPointer(canvas, 0, 5 * nowHours + part);
-
-
     }
 
-
     private void drawPointer(Canvas canvas, int pointerType, int value) {
-
         float degree;
         float[] pointerHeadXY = new float[2];
-
         mNeedlePaint.setStrokeWidth(mWidth * DEFAULT_DEGREE_STROKE_WIDTH);
         switch (pointerType) {
             case 0:
@@ -188,8 +189,9 @@ public class Clock extends View {
                 pointerHeadXY = getPointerHeadXY(HOUR_POINTER_LENGTH, degree);
                 break;
             case 1:
-                // todo 画分针，设置分针的颜色
-
+                degree = value * UNIT_DEGREE;
+                mNeedlePaint.setColor(Color.YELLOW);
+                pointerHeadXY = getPointerHeadXY(MINUTE_POINTER_LENGTH, degree);
                 break;
             case 2:
                 degree = value * UNIT_DEGREE;
@@ -197,8 +199,6 @@ public class Clock extends View {
                 pointerHeadXY = getPointerHeadXY(SECOND_POINTER_LENGTH, degree);
                 break;
         }
-
-
         canvas.drawLine(mCenterX, mCenterY, pointerHeadXY[0], pointerHeadXY[1], mNeedlePaint);
     }
 
@@ -208,6 +208,4 @@ public class Clock extends View {
         xy[1] = (float) (mCenterY - pointerLength * Math.cos(degree));
         return xy;
     }
-
-
 }
